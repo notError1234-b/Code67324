@@ -1,0 +1,135 @@
+import sqlite3
+import os
+
+# Database setup
+DB_NAME = 'todo_list.db'
+
+def create_db():
+    """Create a database and a table for storing tasks if it doesn't exist."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    # Create tasks table if not exists
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task TEXT NOT NULL,
+        completed INTEGER DEFAULT 0,
+        priority INTEGER DEFAULT 0
+    )''')
+    
+    conn.commit()
+    conn.close()
+
+def add_task(task, priority=0):
+    """Add a new task to the database."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+    INSERT INTO tasks (task, priority)
+    VALUES (?, ?)
+    ''', (task, priority))
+    
+    conn.commit()
+    conn.close()
+
+def view_tasks():
+    """View all tasks from the database."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT * FROM tasks ORDER BY priority DESC, id')
+    tasks = cursor.fetchall()
+    
+    if tasks:
+        print("\nTo-Do List:")
+        for task in tasks:
+            status = 'Done' if task[2] == 1 else 'Pending'
+            print(f"{task[0]}. {task[1]} | Status: {status} | Priority: {task[3]}")
+    else:
+        print("\nNo tasks found.")
+    
+    conn.close()
+
+def mark_complete(task_id):
+    """Mark a task as completed."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+    UPDATE tasks
+    SET completed = 1
+    WHERE id = ?
+    ''', (task_id,))
+    
+    conn.commit()
+    conn.close()
+
+def delete_task(task_id):
+    """Delete a task from the database."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+    DELETE FROM tasks
+    WHERE id = ?
+    ''', (task_id,))
+    
+    conn.commit()
+    conn.close()
+
+def delete_all_tasks():
+    """Delete all tasks from the database."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('DELETE FROM tasks')
+    
+    conn.commit()
+    conn.close()
+
+# Main app functionality
+def display_menu():
+    """Display the main menu of the To-Do list app."""
+    print("\nTo-Do List App")
+    print("1. Add Task")
+    print("2. View Tasks")
+    print("3. Mark Task as Complete")
+    print("4. Delete Task")
+    print("5. Delete All Tasks")
+    print("6. Exit")
+    
+def main():
+    """Main app loop to interact with the user."""
+    create_db()
+    
+    while True:
+        display_menu()
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            task = input("Enter the task: ")
+            priority = int(input("Enter priority (0 is low, 1 is high): "))
+            add_task(task, priority)
+        elif choice == '2':
+            view_tasks()
+        elif choice == '3':
+            view_tasks()
+            task_id = int(input("Enter the task ID to mark as complete: "))
+            mark_complete(task_id)
+        elif choice == '4':
+            view_tasks()
+            task_id = int(input("Enter the task ID to delete: "))
+            delete_task(task_id)
+        elif choice == '5':
+            delete_all_tasks()
+            print("All tasks deleted.")
+        elif choice == '6':
+            print("Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
